@@ -17,69 +17,74 @@ terminal colors to screen together with the RGB values.
 
 ```
 #include <math.h>
-#include <stdio.h>
+#include <stdlib.h>
+
 #include <unistd.h>
 
 #include <curses.h>
 #include <term.h>
 
-#include <termcolor/termcolor.h>
+#include "termcolor/termcolor.h"
+
+#define UCHAR_DIFF(m, n) \
+  ((m) < (n) ? (n) - (m) : (m) - (n))
 
 #define SQUARE(x) ((x)*(x))
-#define DIFF(x, y) ((x) > (y) ? (x) - (y) : (y) - (x))
 
-static double compare (termcolor a, termcolor b) {
-  return sqrt(SQUARE(DIFF(a.r, b.r)) +
-	      SQUARE(DIFF(a.g, b.g)) +
-	      SQUARE(DIFF(a.b, b.b)));
+static double diff (termcolor a, termcolor b) {
+  return sqrt (
+    SQUARE(UCHAR_DIFF(a.r, b.r)) +
+    SQUARE(UCHAR_DIFF(a.g, b.g)) +
+    SQUARE(UCHAR_DIFF(a.b, b.b))
+  );
 }
 
-static int closest (termcolor c) {
-  int i;
-  int closest = 0;
-  double min_diff = INFINITY;
+static size_t closest (termcolor c) {
+  size_t i;
+  size_t best;
+  double least_diff = INFINITY;
 
-  for (i = 0; i < max_colors; i++) {
-    termcolor a = termcolor_get(i);
-    double diff = compare(a, c);
+  for (i = 0; i < termcolor_max_colors; i++) {
+    double d = diff(c, termcolor_get(i));
 
-    if (diff < min_diff) {
-      min_diff = diff;
-      closest = i;
+    if (d < least_diff) {
+      least_diff = d;
+      best = i;
     }
   }
 
-  return closest;
+  return best;
 }
 
-static int negative (termcolor c) {
-  termcolor n = (termcolor) {
-    255 - c.r,
-    255 - c.g,
-    255 - c.b
-  };
+static size_t negative (termcolor c) {
+  termcolor n;
+
+  n.r = 255 - c.r;
+  n.g = 255 - c.g;
+  n.b = 255 - c.b;
 
   return closest(n);
 }
 
-int main(void) {
-  int i;
+int main (void) {
+  size_t i;
 
   setupterm(NULL, STDOUT_FILENO, NULL);
   termcolor_setup(NULL);
 
-  for (i = 0; i < max_colors; i++) {
+  for (i = 0; i < termcolor_max_colors; i++) {
+    termcolor c = termcolor_get(i);
+    size_t n = negative(c);
     int j;
-    char * color = tparm(set_a_background, i);
-    putp(color);
+
+    putp(tparm(set_a_background, i));
 
     for (j = 0; j < columns-17; j++)
       putchar(' ');
 
-    termcolor c = termcolor_get(i);
-    color = tparm(set_a_foreground, negative(c));
-    putp(color);
-    printf("%3d;rgb:#%02x/%02x/%02x", i, c.r, c.g, c.b);
+    putp(tparm(set_a_foreground, n));
+    printf("%3zu;rgb:#%02x/%02x/%02x",
+           i, c.r, c.g, c.b);
 
     putp(exit_attribute_mode);
     putchar('\n');
@@ -88,3 +93,9 @@ int main(void) {
   return 0;
 }
 ```
+
+After termcolor and ncurses have been installed the example (saved as
+example.c) may be compiled with
+$ gcc example.c -ltermcolor -lcurses -lm -o example
+and then ran with
+$ ./example
