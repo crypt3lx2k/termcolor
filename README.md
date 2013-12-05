@@ -1,6 +1,9 @@
 Termcolor is a simple MIT licensed database that provides terminal colors based
 on a terminal name or the TERM environment variable.
 
+To acquire a tarball of the latest release please visit
+[tarball download link](https://github.com/crypt3lx2k/termcolor/releases/download/v1.0.0/termcolor-1.0.0.tar.gz).
+
 If you obtained the source directly from github and not through a tarball then
 there is no configure script in this directory. You may create a configure
 script if you have the GNU autotools installed by running the command
