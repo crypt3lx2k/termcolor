@@ -3,6 +3,9 @@
 
 #include "termcolor_private.h"
 
+/* number of colors available for currently active terminal. */
+size_t termcolor_max_colors;
+
 /* currently active terminal */
 static termcolor_term terminal;
 
@@ -51,5 +54,3 @@ void termcolor_setup (const char * term) {
 termcolor termcolor_get (size_t n) {
   return termcolor_terminals[terminal].color(n);
 }
-
-size_t termcolor_max_colors;
